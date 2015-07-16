@@ -183,6 +183,9 @@ def getPolicyDefinitions(scope=""):
             'tokenlabel': {
                 'type': 'str',
                 'desc': 'the label for the google authenticator.'},
+            'tokenissuer': {
+                'type': 'str',
+                'desc': 'the issuer label for the google authenticator.'},
             'autoassignment': {
                 'type': 'int',
                 'value': [6, 8],
@@ -1003,6 +1006,32 @@ def get_tokenlabel(user="", realm="", serial=""):
             tokenlabel = string_label
 
     return tokenlabel
+
+
+def get_tokenissuer(user="", realm="", serial=""):
+    '''
+    This internal function returns the issuer of the token as defined in policy
+    scope = enrollment, action = tokenissuer = <string>
+    The string can have the following variables:
+        <u>: user
+        <r>: realm
+        <s>: token serial
+
+    This function is used to create 'otpauth' tokens
+    '''
+    tokenissuer = ""
+    pol = get_client_policy(get_client(), scope="enrollment",
+                            realm=realm, user=user)
+    if len(pol) != 0:
+        string_issuer = getPolicyActionValue(pol, "tokenissuer", String=True)
+        if string_issuer:
+            string_issuer = re.sub('<u>', user, string_issuer)
+            string_issuer = re.sub('<r>', realm, string_issuer)
+            string_issuer = re.sub('<s>', serial, string_issuer)
+            tokenissuer = string_issuer
+
+    log.debug("[get_tokenissuer] providing tokenissuer = %s" % str(tokenissuer))
+    return tokenissuer
 
 
 def get_autoassignment(user):
