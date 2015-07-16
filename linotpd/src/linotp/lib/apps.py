@@ -40,7 +40,7 @@ import urllib
 import logging
 log = logging.getLogger(__name__)
 
-from linotp.lib.policy import get_tokenlabel
+from linotp.lib.policy import get_tokenlabel, get_tokenissuer
 from urllib import quote
 
 #######################################
@@ -142,12 +142,19 @@ def create_google_authenticator_url(user, realm, key, type="hmac", serial=""):
     allowed_label_len = max_len - base_len
     log.debug("[create_google_authenticator_url] we got %s characters left for the token label" % str(allowed_label_len))
 
+    issuer = get_tokenissuer(user, realm, serial)
+    url_issuer = quote(issuer)
     label = get_tokenlabel(user, realm, serial)
     label = label[0:allowed_label_len]
 
-    url_label = quote(label)
+    if issuer:
+        url_label = url_issuer + ':' + quote(label)
+        ga = "otpauth://%s/%s?secret=%s&counter=0&issuer=%s" % (type, url_label, otpkey, url_issuer)
+    else:
+        url_label = quote(label)
+        ga = "otpauth://%s/%s?secret=%s&counter=0" % (type, url_label, otpkey)
 
-    return "otpauth://%s/%s?secret=%s&counter=0" % (type, url_label, otpkey)
+    return ga
 
 def create_oathtoken_url(user, realm, otpkey, type="hmac", serial=""):
     # 'url' : 'oathtoken:///addToken?name='+serial +
