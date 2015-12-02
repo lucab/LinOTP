@@ -1881,8 +1881,13 @@ def losttoken(serial, new_serial="", password="", default_validity=0):
                          }, User('', '', ''))
     res['init'] = ret
     if True == ret:
+        # copy the assigned user
         res['user' ] = copyTokenUser(serial, new_serial)
-        res['pin'] = copyTokenPin(serial, new_serial)
+
+        # copy the pin, except for spass
+        # (because the pin is the spass password, and the user lost it)
+        if getTokenType(serial) not in ["spass"]:
+            res['pin'] = copyTokenPin(serial, new_serial)
 
         # set validity period
         end_date = (datetime.date.today()
